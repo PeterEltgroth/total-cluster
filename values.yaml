@@ -37,10 +37,10 @@ needsCAInfrastructure: true
 mail:
   enabled: true
   relayHost: "smtp.gmail.com"
-  relayPort: "587"
+  relayPort: "'587'"
   relayUsername: "jason.mimick@10gen.com"
   relayPassword: "wuwkibhriamhrxgz"
-   
+
 
 opsManager:
   image: mongodb-enterprise-ops-manager

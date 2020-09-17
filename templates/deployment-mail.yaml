@@ -41,12 +41,12 @@ spec:
         - name: RELAY_HOST
           value: {{ .Values.mail.relayHost }}
         - name: RELAY_PORT
-          value: {{ .Values.mail.relayPrt }}
+          value: {{ .Values.mail.relayPort }}
         - name: RELAY_USERNAME
           value: {{ .Values.mail.relayUsername }}
         - name: RELAY_PASSWORD
           value: {{ .Values.mail.relayPassword }}
-        image: bytemark/smtp 
+        image: bytemark/smtp
         ports:
         - containerPort: 25
 {{- end }}
