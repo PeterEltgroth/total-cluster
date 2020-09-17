@@ -25,11 +25,7 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mail 
-  template:
-    metadata:
-      labels:
-        app: mail 
+      app: mail
   template:
     metadata:
       labels:

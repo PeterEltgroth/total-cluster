@@ -90,10 +90,9 @@ spec:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/role 
+              - key: kubernetes.io/role
                 operator: In
                 values:
                 - {{ .Values.opsManager.nodeAffinity.nodeRole }}
 {{- end }}
 {{- end }}
-
