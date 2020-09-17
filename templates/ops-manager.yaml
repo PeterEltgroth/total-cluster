@@ -9,7 +9,7 @@ metadata:
     app: mongodb-ops-manager
     product: {{ .Chart.Name }}
 spec:
-  replicas: 1 
+  replicas: 1
   version: 4.2.4
   adminCredentials: {{ .Release.Name }}-ops-manager-secret
   externalConnectivity:
@@ -30,15 +30,31 @@ spec:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
           - matchExpressions:
-            - key: kubernetes.io/role 
+            - key: kubernetes.io/role
               operator: In
               values:
               - {{ .Values.opsManager.nodeAffinity.nodeRole }}
 {{- end }}
 
-{{- with .Values.opsManager.backup }}
+{{- if eq .Values.opsManager.backup.enabled true }}
   backup:
-    {{- toYaml . | nindent 4 }}
+    enabled: true
+    opLogStores:
+    - name: oplog1
+      mongodbResourceRef:
+        name: {{ .Release.Name }}-ops-manager-backup
+    s3Stores:
+    - name: S3GatewayStore1
+      mongodbResourceRef:
+        name: ops-manager-backup
+      pathStyleAccessEnabled: true
+      s3BucketEndpoint: http://minio:9000
+      s3BucketName: test
+      s3SecretRef:
+        name: minio
+{{- else  }}
+  backup:
+    enabled: false
 {{- end }}
 
 #{{ .Values.opsManager.nodeAffinity }}
@@ -48,7 +64,7 @@ spec:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
             - matchExpressions:
-              - key: kubernetes.io/role 
+              - key: kubernetes.io/role
                 operator: In
                 values:
                 - {{ .Values.opsManager.nodeAffinity.nodeRole }}-backup-daemon

@@ -8,13 +8,13 @@ managedSecurityContext: false
 
 operator:
   # Execution environment for the operator, dev or prod. Use dev for more verbose logging
-  env: dev 
+  env: dev
 
   # Name that will be assigned to most of internal Kubernetes objects like Deployment, ServiceAccount, Role etc.
   name: mongodb-enterprise-operator
 
   # Version of mongodb-enterprise-operator and mongodb-enterprise-database images
-  version: latest
+  version: 1.7.1
 
 database:
   name: mongodb-enterprise-database
@@ -51,24 +51,11 @@ opsManager:
   adminCredentials:
     FirstName: Joe
     LastName: McMongo
-    Password: MongoDB12345% 
+    Password: MongoDB12345%
     Username: admin@mongodb.com
     publicApiKey: MongoDB12345%
   backup:
     enabled: true
-    opLogStores:
-    - name: oplog1
-      mongodbResourceRef:
-        name: {{ .Release.Name }}-ops-manager-backup 
-    s3Stores:
-    - name: S3GatewayStore1
-      mongodbResourceRef:
-        name: ops-manager-backup 
-      pathStyleAccessEnabled: true
-      s3BucketEndpoint: http://minio:9000 
-      s3BucketName: test 
-      s3SecretRef:
-        name: minio
 
 mongodb:
   cluster:
@@ -82,8 +69,8 @@ mongodb:
       memory: 1G
       persistence:
         single:
-          storage: 10G   
-          #storageClass: default 
+          storage: 10G
+          #storageClass: default
 
 # add users:
 
