@@ -10,21 +10,25 @@ metadata:
     product: {{ .Chart.Name }}
 spec:
   replicas: 1
-  version: 4.2.4
+  version: 4.2.12
   adminCredentials: {{ .Release.Name }}-ops-manager-secret
   externalConnectivity:
     type: LoadBalancer
-  podSpec:
-    podTemplate:
-      spec:
+  applicationDatabase:
+    members: 3
+    version: 4.2.2-ent
+    persistent: true
+#  podSpec:
+#    podTemplate:
+#      spec:
         # This container will be added to each pod as a sidecar
-        containers:
-          - name: smtp-sidecar
-            image: bytemark/smtp
-          - name: {{ .Release.Name }}-ops-manager
-            env:
-            - name: SKIP_OPS_MANAGER_REGISTRATION
-              value: "true"
+#        containers:
+#          - name: smtp-sidecar
+#            image: bytemark/smtp
+#          - name: {{ .Release.Name }}-ops-manager
+#            env:
+#           - name: SKIP_OPS_MANAGER_REGISTRATION
+#             value: "true"
 {{- if .Values.opsManager.nodeAffinity }}
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -52,9 +56,9 @@ spec:
       s3BucketName: test
       s3SecretRef:
         name: minio
-{{- else  }}
-  backup:
-    enabled: false
+# {{- else  }}
+#   backup:
+#     enabled: false
 {{- end }}
 
 #{{ .Values.opsManager.nodeAffinity }}
@@ -70,20 +74,6 @@ spec:
                 - {{ .Values.opsManager.nodeAffinity.nodeRole }}-backup-daemon
 {{- end }}
 
-  # the Ops Manager configuration. All the values must be of type string
-  configuration:
-    mms.fromEmailAddr: {{ .Values.mail.relayUsername }}
-    mms.replyToEmailAddr: {{ .Values.mail.relayUsername }}
-    mms.adminEmailAddr: {{ .Values.mail.relayUsername }}
-    mms.mail.transport: "smtp"
-    mms.mail.hostname: {{ .Release.Name }}-mail
-    mms.mail.port: "25"
-    mms.ignoreInitialUiSetup: "true"
-
-  applicationDatabase:
-    members: 3
-    version: 4.2.0
-    persistent: true
 {{- if .Values.opsManager.nodeAffinity }}
     podSpec:
       nodeAffinity:

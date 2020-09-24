@@ -6,12 +6,22 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     product: {{ .Chart.Name }}
+{{- if .Values.registry.imagePullSecrets}}
+imagePullSecrets:
+  - name: {{ .Values.registry.imagePullSecrets }}
+{{- end }}
+
+
 ---
-kind: Role 
+kind: {{ if eq (.Values.operator.watchNamespace | default "") "*" }} ClusterRole {{ else }} Role {{ end }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Values.operator.name }}
+  {{- if not (eq (.Values.operator.watchNamespace | default "*") "*") }}
+  namespace: {{ .Values.operator.watchNamespace }}
+  {{- else }}
   namespace: {{ .Release.Namespace }}
+  {{- end }}
   labels:
     product: {{ .Chart.Name }}
 rules:
@@ -39,6 +49,15 @@ rules:
   - watch
   - delete
   - update
+  {{- if eq (.Values.operator.watchNamespace | default "") "*" }}
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - list
+  - watch
+  {{- end}}
 - apiGroups:
   - mongodb.com
   resources:
@@ -47,23 +66,47 @@ rules:
   - mongodbusers
   - opsmanagers
   - opsmanagers/finalizers
+{{- if .Values.subresourceEnabled }}
+  - mongodb/status
+  - mongodbusers/status
+  - opsmanagers/status
+{{- end }}
   verbs:
-  - get
-  - list
-  - watch
-  - delete
-  - update
+  - "*"
+# This ClusterRoleBinding is necessary in order to use validating
+# webhooks—these will prevent you from applying a variety of invalid resource
+# definitions. The validating webhooks are optional so this can be removed if
+# necessary.
 ---
-kind: RoleBinding
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ .Values.operator.name }}-{{ .Release.Namespace }}-webhook-binding
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mongodb-enterprise-operator-mongodb-webhook
+subjects:
+- kind: ServiceAccount
+  name: {{ .Values.operator.name }}
+  namespace: {{ .Release.Namespace }}
+
+---
+kind: {{ if eq (.Values.operator.watchNamespace | default "") "*" }} ClusterRoleBinding {{ else }} RoleBinding {{ end }}
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: {{ .Values.operator.name }}
+  {{- if not (eq (.Values.operator.watchNamespace | default "*") "*") }}
+  namespace: {{ .Values.operator.watchNamespace }}
+  {{- else }}
   namespace: {{ .Release.Namespace }}
+  {{- end }}
   labels:
     product: {{ .Chart.Name }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role 
+  kind: {{ if eq (.Values.operator.watchNamespace | default "") "*" }} ClusterRole {{ else }} Role {{ end }}
   name: {{ .Values.operator.name }}
 subjects:
 - kind: ServiceAccount
@@ -90,6 +133,7 @@ rules:
   - create
   - list
   - watch
+
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
@@ -106,54 +150,4 @@ subjects:
 - kind: ServiceAccount
   name: {{ .Values.operator.name }}
   namespace: {{ .Release.Namespace }}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: mongodb-enterprise-database-pods
-  namespace: {{ .Release.Namespace }}
-  labels:
-    product: {{ .Chart.Name }}
 {{- end }}
-{{- if .Values.opsManager.enabled }}
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: mongodb-enterprise-appdb
-  namespace: {{ .Release.Namespace }}
-  labels:
-    product: {{ .Chart.Name }}
----
-kind: Role
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: mongodb-enterprise-appdb
-  namespace: {{ .Release.Namespace }}
-  labels:
-    product: {{ .Chart.Name }}
-rules:
-  - apiGroups:
-      - ""
-    resources:
-      - configmaps
-    verbs:
-      - get
----
-kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1
-metadata:
-  name: mongodb-enterprise-appdb
-  namespace: {{ .Release.Namespace }}
-  labels:
-    product: {{ .Chart.Name }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: mongodb-enterprise-appdb
-subjects:
-  - kind: ServiceAccount
-    name: mongodb-enterprise-appdb
-    namespace: {{ .Release.Namespace }}
-{{- end }}
-
